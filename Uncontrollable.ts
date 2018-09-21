@@ -2,7 +2,8 @@ import * as React from 'react'
 import uncontrollable from 'uncontrollable'
 
 /**
- * Jenya Tra <traxtb@ya.ru>
+ * Jenya Tra
+ * https://github.com/otraghly/uncontrollabe_ts
  * Licence 1: WTFPL
  * Licence 2: MIT
  */
