@@ -17,8 +17,8 @@ interface Ref<T> {
 /**
  * This type can be used to get type of resulting Uncontrollable Component's props.
  * Type parameters: 
- *    2) Props of the Component
- *    3) Hash of default* for Uncontrollable
+ *    1) Props of the Component
+ *    2) Hash of 'defaultValue', 'value' and 'on_change' props for Uncontrollable
  * 
  * Use case:
  * Imagine an UncontrollableComponent, which should be extended 
