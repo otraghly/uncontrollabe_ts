@@ -9,6 +9,11 @@ import uncontrollable from 'uncontrollable'
  */
 
 /**
+ * 
+ */
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+
+/**
  * Support transparent ref forwarding.
  */
 interface Ref<T> {
@@ -16,10 +21,18 @@ interface Ref<T> {
 }
 
 /**
+ * Collects prop types for uncontrollable props
+ */
+type CP<H extends { [ key: string ]: string }, P extends any> = {
+    [ K in keyof H | H[ keyof H ] ]: P[ K ]
+}
+
+
+/**
  * This type can be used to get type of resulting Uncontrollable Component's props.
  * Type parameters: 
- *    1) Props of the Component
- *    2) Hash of 'defaultValue', 'value' and 'on_change' props for Uncontrollable
+ *    1) Type of uncontrollable hash
+ *    2) Type of props
  * 
  * Use case:
  * Imagine an UncontrollableComponent, which should be extended 
@@ -29,13 +42,13 @@ interface Ref<T> {
  * 
  * // This is out UncontrollableComponent
  * // See docs for {@link Uncontrollable} for details how it's done.
- * const UncontrollableEmitBar = Uncontrollable<Props, UncontrollableProps>({
- *   identity: 'on_identity_change', // Whatever you have here.
+ * const UncontrollableEmitBar = Uncontrollable({
+ *   identity: 'on_identity_change' as 'on_identity_change', // Whatever you have here, just make sure value typed as literal.
  * })(EmitBar)
  * 
  * // Next goes the trick: we getting the props type for UncontrollableEmitBar separately:
  * // (Type args just like for {@link Uncontrollable})
- * type UncontrollableEmitBarProps = UncontrollablePropsType<Props, UncontrollableProps>
+ * type UncontrollableEmitBarProps = UncontrollablePropsType<typeof uncontrollable_hash, Props>
  * 
  * 
  * // Now we using the props type we created, to wrap uncontrollable component into context consumer:
@@ -58,65 +71,54 @@ interface Ref<T> {
  * )
  * 
  */
-export type UncontrollablePropsType<P extends object, UP extends object> = Partial<UP> & Pick<P, Exclude<keyof P, keyof UP>> & Ref<P>
+export type UncontrollablePropsType<
+    H extends { [ key: string ]: string },
+    P extends any,
+    > = Partial<CP<H, P>> & Omit<P, keyof CP<H, P>> & Ref<P>
 
 /**
- * To provide enough information for typing,
- * the wrapper needs two type parameters.
+ * Usage:
  * 
- * First one is just the type of props of Component.
- * Props like 'value' and 'on_change' goes here, but NOT 'defaultValue'-like.
+ * // The Props interface should specify all props of the component,
+ * // AND default*-like props for uncontrollable.
+ * //
+ * // Note that on_change- like handlers is mandatory, value- and default*- are optional.
+ * interface Props {
+ * // First props set
+ *     value?: number // Optional
+ *     on_change: (value: number) => void // Mandatory, as uncontrollable guarantees presence (or TS will force you to ckeck before use.)
+ * 
+ *     defaultValue?: number // Though extendable component will not see it. 
  *
- * Second type describes all props the uncontrollable works with.
- * All 'value', 'on_change', 'defaultValue' props should go there.
- * Here it called as «UncontrollableProps».
- * 
- * To prevent repetition, 'value' and 'on_change' -like props could be
- * combined in one interface (here it called «ControllableProps»).
- * 
+ *     // Second set
+ *     title?: string
+ *     on_title_change: (t: string) => void
+ *  *     defaultTitle?: string
  *
- * The usage example follows:
- * 
- * // Here goes all props to be controlled by uncontrollabe.
- * // Note that 'on_change'-like function is mandatory.
- * interface ControllableProps {
- *     value?: string
- *     on_change: (value: string) => void
- *     expanded?: boolean
- *     on_expanded_change: (expanded: boolean) => void
+ *
+ *     // Other props, whatever you have.
+ *     other: boolean
+ *     another?: string
  * }
- * 
- * // Here goes component's props, note how it extends ControllableProps
- * interface Props extends ControllableProps {
- *     color: string
- *     other_props?: any
- *     ...other component props     
+ *
+ *
+ * class Example extends React.Component<Props> {
+ *     public render () { return null }
  * }
- * 
- * // Component with the props
- * class ControllableExample extends React.Component<Props> {
- *  ...
- * }
- * 
- * // Hash of default* props
- * // extended with ControllableProps
- * interface UncontrollableProps extends ControllableProps {
- *      defaultValue?: string
- *      defaultExpanded?: boolean
- * }
- * 
- * // There we exporting UncontrollableComponent.
- * export default Uncontrollable<Props, UncontrollableProps>({
- *      value: 'on_change',
- *      expanded: 'on_expanded_change',
- * })(ControllableExample)
+ *
+ *
+ * // It's crucial to pass values typed as string literals, otherwise it won't work!
+ * const UncontrolledExample = Uncontrollable({
+ *     value: 'on_change' as 'on_change', // As literal!
+ *     title: 'on_title_change' as 'on_title_change', // As literal!
+ * })(Example)
  * 
  */
 const Uncontrollable =
-    <P extends object, UP extends object> (propHandlerHash: object, methods = []) =>
-        (Component: React.ComponentType<P>):
-            React.ComponentType<UncontrollablePropsType<P, UP>> =>
+    <H extends { [ key: string ]: string }> (propHandlerHash: H, methods = []) =>
+        <P extends object> (Component: React.ComponentType<P>):
+            React.ComponentType<UncontrollablePropsType<H, P>> =>
             uncontrollable(Component, propHandlerHash, methods)
 
 
-export default Uncontrollable            
+export default Uncontrollable          
