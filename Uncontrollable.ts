@@ -86,13 +86,13 @@ export type UncontrollablePropsType<
  * interface Props {
  * // First props set
  *     value?: number // Optional
- *     on_change: (value: number) => void // Mandatory, as uncontrollable guarantees presence (or TS will force you to ckeck before use.)
+ *     on_change: (value?: number) => void // Mandatory, as uncontrollable guarantees presence (or TS will force you to ckeck before use.)
  * 
  *     defaultValue?: number // Though extendable component will not see it. 
  *
  *     // Second set
  *     title?: string
- *     on_title_change: (t: string) => void
+ *     on_title_change: (t?: string) => void
  *  *     defaultTitle?: string
  *
  *
